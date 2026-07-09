@@ -68,6 +68,31 @@
   .btn-ghost{background:#fff;color:var(--accent);border:1px solid var(--accent);}
   .btn-ghost:hover{background:var(--accent-soft);}
 
+  .room-toggle{
+    display:flex;
+    flex-wrap:wrap;
+    background:#fff;
+    border:1px solid var(--accent);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .room-btn{
+    font-family:'Cairo',sans-serif;
+    border:none;
+    background:#fff;
+    color:var(--accent);
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .12s ease,color .12s ease;
+    flex:1 1 auto;
+    white-space:nowrap;
+  }
+  .room-btn + .room-btn{border-right:1px solid var(--accent);}
+  .room-btn:hover{background:var(--accent-soft);}
+  .room-btn.active{background:var(--accent);color:#fff;}
+
   .toolbar-btns{position:relative;}
   .delete-menu{
     display:none;
@@ -316,6 +341,14 @@
     overflow:hidden;
     resize:none;
   }
+  table.entries td.incidents-cell.has-incident{
+    background:#ffdcdc;
+  }
+  table.entries td.incidents-cell.has-incident textarea{
+    background:transparent;
+    color:#8a0000;
+    font-weight:700;
+  }
   table.entries td.site-cell textarea{
     text-align:center;
     min-height:36px;
@@ -404,12 +437,82 @@
   }
 
   #pdfArea{position:absolute;left:-9999px;top:0;}
+
+  .help-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .help-overlay.open{display:flex;}
+  .help-modal{
+    background:#fff;
+    border-radius:10px;
+    max-width:640px;
+    width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:22px 24px;
+    box-shadow:0 10px 40px rgba(0,0,0,.3);
+    position:relative;
+  }
+  .help-modal h2{
+    color:var(--accent);
+    font-size:18px;
+    margin:0 0 14px;
+    border-bottom:2px solid var(--accent-soft);
+    padding-bottom:10px;
+  }
+  .help-modal h3{
+    color:var(--accent);
+    font-size:14.5px;
+    margin:18px 0 6px;
+  }
+  .help-modal p, .help-modal li{
+    font-size:13.5px;
+    line-height:1.9;
+    color:var(--ink);
+  }
+  .help-modal ul{
+    margin:0;
+    padding-right:20px;
+  }
+  .help-modal .swatch{
+    display:inline-block;
+    width:14px;height:14px;
+    border-radius:3px;
+    vertical-align:middle;
+    margin-left:6px;
+  }
+  .help-close{
+    position:absolute;
+    left:16px;top:16px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    border:none;
+    border-radius:6px;
+    width:30px;height:30px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .help-close:hover{background:var(--accent);color:#fff;}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
+  <div class="room-toggle" id="roomToggle">
+    <button type="button" class="room-btn active" data-room="arafa" onclick="applyRoomFilter('arafa')">الغرفة المركزية عرفة</button>
+    <button type="button" class="room-btn" data-room="qalaa" onclick="applyRoomFilter('qalaa')">الغرفة المركزية القلعة</button>
+    <button type="button" class="room-btn" data-room="taqa" onclick="applyRoomFilter('taqa')">المنظومات التابعة للواء شرطة الطاقة الأول</button>
+    <button type="button" class="room-btn" data-room="all" onclick="applyRoomFilter('all')">جميع الكاميرات</button>
+  </div>
   <div class="toolbar-btns">
+    <button class="btn btn-ghost" onclick="openHelp()">كيفية عمل التطبيق ⓘ</button>
     <button class="btn btn-ghost" onclick="addRow()">إضافة موقع ＋</button>
     <button class="btn btn-ghost" onclick="toggleDeleteMenu(event)">حذف مواقع 🗑</button>
     <div id="deleteMenu" class="delete-menu">
@@ -417,6 +520,42 @@
       <button type="button" onclick="deleteAllRows(); closeDeleteMenu();">حذف جميع المواقع</button>
     </div>
     <button class="btn btn-primary" onclick="exportPDF()">تصدير PDF ⬇</button>
+  </div>
+</div>
+
+<div class="help-overlay" id="helpOverlay" onclick="if(event.target===this) closeHelp()">
+  <div class="help-modal">
+    <button class="help-close" onclick="closeHelp()">✕</button>
+    <h2>كيفية عمل التطبيق</h2>
+
+    <h3>1. أزرار الغرف</h3>
+    <p>في أعلى الصفحة أربعة أزرار للتنقل بين مجموعات المواقع:</p>
+    <ul>
+      <li><b>الغرفة المركزية عرفة</b> — يعرض مواقع كاميرات عرفة فقط.</li>
+      <li><b>الغرفة المركزية القلعة</b> — يعرض مواقع كاميرات القلعة فقط.</li>
+      <li><b>المنظومات التابعة للواء شرطة الطاقة الأول</b> — يعرض مواقع منظومات لواء شرطة الطاقة فقط.</li>
+      <li><b>جميع الكاميرات</b> — يعرض كل المواقع من الغرف الثلاث معًا.</li>
+    </ul>
+    <p>عند التبديل بين الأزرار، يُعاد ترقيم الجدول تلقائيًا ويُحدَّث مجموع الكاميرات ليطابق الغرفة المعروضة فقط.</p>
+
+    <h3>2. إضافة وحذف المواقع</h3>
+    <ul>
+      <li><b>إضافة موقع ＋</b> — يضيف صفًا جديدًا فارغًا في الغرفة المعروضة حاليًا لتعبئته يدويًا.</li>
+      <li><b>حذف مواقع 🗑</b> — قائمة منسدلة بها خيار حذف آخر موقع، أو حذف جميع المواقع الظاهرة حاليًا (خاصة بالغرفة المفعّلة فقط).</li>
+      <li>يمكن أيضًا حذف أي صف بمفرده بالضغط على ✕ في نهاية سطره.</li>
+    </ul>
+
+    <h3>3. تعبئة بيانات كل موقع</h3>
+    <p>كل صف يحتوي: اسم الموقع، مجموع الكاميرات، رقم الهاتف، وقت الاتصال، عدد الكاميرات المتعطلة، اسم الموظف المسؤول، الحوادث، والملاحظات. القيم مثل "مجموع الكاميرات" و"المتعطلة" تُحدّث تلقائيًا مجموع أعلى الصفحة (تعمل / لا تعمل).</p>
+
+    <h3>4. تنبيه الحوادث</h3>
+    <p><span class="swatch" style="background:#ffdcdc;border:1px solid #a11d1d;"></span>عند كتابة أي نص في خانة "الحوادث" لأي موقع، تتحوّل خلفية تلك الخلية إلى اللون الأحمر تلقائيًا كتنبيه بصري، وتعود لطبيعتها فور إفراغ الخانة.</p>
+
+    <h3>5. تصدير PDF</h3>
+    <p>زر <b>تصدير PDF ⬇</b> يحوّل الجدول المعروض حاليًا (حسب الغرفة المفعّلة) إلى ملف PDF جاهز للطباعة أو الإرسال، ويحمل التاريخ المحدد في اسم الملف تلقائيًا.</p>
+
+    <h3>6. التاريخ واليوم</h3>
+    <p>يمكن تحديد "من تاريخ" و"إلى تاريخ" أعلى الجدول، ويُحدَّث اسم اليوم (الخميس، الجمعة...) تلقائيًا حسب التاريخ المُدخل.</p>
   </div>
 </div>
 
@@ -539,12 +678,14 @@ function syncFromPicker(pickerId, textId){
 
 let rowId = 0;
 const tbody = document.getElementById('tbody');
+let currentRoom = 'arafa';
 
 function makeRow(data){
   data = data || {};
   rowId++;
   const tr = document.createElement('tr');
   tr.dataset.id = rowId;
+  tr.dataset.room = data.room || (currentRoom === 'all' ? 'arafa' : currentRoom);
   tr.innerHTML = `
     <td class="row-num rowIndex"></td>
     <td class="site-cell"><textarea class="f-site" placeholder="اسم الموقع" oninput="autosizeTextarea(this)">${data.site||''}</textarea></td>
@@ -553,13 +694,15 @@ function makeRow(data){
     <td><input class="f-calltime" type="time" value="${data.calltime||''}"></td>
     <td><input class="f-down f-auto" type="number" min="0" value="${data.down??''}" oninput="recalcRow(this);autosizeField(this)"></td>
     <td><input class="f-staff f-auto" value="${data.staff||''}" placeholder="الاسم" oninput="autosizeField(this)"></td>
-    <td class="incidents-cell"><textarea class="f-inc" placeholder="لا يوجد حوادث يستحق الذكر" oninput="autosizeTextarea(this)">${data.inc||''}</textarea></td>
+    <td class="incidents-cell"><textarea class="f-inc" placeholder="لا يوجد حوادث يستحق الذكر" oninput="autosizeTextarea(this);markIncident(this)">${data.inc||''}</textarea></td>
     <td class="notes-cell"><textarea class="f-notes" placeholder="جميع الكاميرات تعمل بصورة جيدة" oninput="autosizeTextarea(this)">${data.notes||''}</textarea></td>
     <td class="del-cell"><button onclick="delRow(this)" title="حذف">✕</button></td>
   `;
   tbody.appendChild(tr);
   tr.querySelectorAll('.f-auto').forEach(autosizeField);
   tr.querySelectorAll('textarea').forEach(autosizeTextarea);
+  markIncident(tr.querySelector('.f-inc'));
+  tr.style.display = (currentRoom === 'all' || tr.dataset.room === currentRoom) ? '' : 'none';
   reindex();
   recalcSummary();
 }
@@ -604,15 +747,49 @@ function autosizeField(el){
 }
 
 // يمدّد ارتفاع الخلايا النصية (الموقع/الحوادث/الملاحظات) تلقائيًا كي لا يُخفى أي جزء من النص
+// يلوّن خلية الحادث بالأحمر تنبيهًا عند كتابة أي نص فيها، ويزيل التلوين عند إفراغها
+function markIncident(el){
+  const cell = el.closest('.incidents-cell');
+  if(!cell) return;
+  cell.classList.toggle('has-incident', el.value.trim().length > 0);
+}
+
 function autosizeTextarea(el){
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
 
 function reindex(){
-  [...tbody.children].forEach((tr,i)=>{
-    tr.querySelector('.rowIndex').textContent = i+1;
+  let i = 0;
+  [...tbody.children].forEach(tr=>{
+    if(tr.style.display === 'none') return;
+    i++;
+    tr.querySelector('.rowIndex').textContent = i;
   });
+}
+
+// تبديل عرض الجدول بين مواقع الغرفة المركزية عرفة والغرفة المركزية القلعة
+// نافذة شرح كيفية عمل التطبيق
+function openHelp(){
+  document.getElementById('helpOverlay').classList.add('open');
+}
+function closeHelp(){
+  document.getElementById('helpOverlay').classList.remove('open');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeHelp();
+});
+
+function applyRoomFilter(room){
+  currentRoom = room;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    tr.style.display = (room === 'all' || tr.dataset.room === room) ? '' : 'none';
+  });
+  document.querySelectorAll('.room-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.room === room);
+  });
+  reindex();
+  recalcSummary();
 }
 
 function addRow(){ makeRow(); }
@@ -632,17 +809,18 @@ document.addEventListener('click', function(e){
 });
 
 function deleteAllRows(){
-  if(tbody.children.length === 0) return;
-  if(!confirm('هل أنت متأكد من حذف جميع المواقع؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-  tbody.innerHTML = '';
+  const visibleRows = [...tbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none');
+  if(visibleRows.length === 0) return;
+  if(!confirm('هل أنت متأكد من حذف جميع مواقع الغرفة المعروضة حاليًا؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+  visibleRows.forEach(tr => tr.remove());
   reindex();
   recalcSummary();
 }
 
 function delLastRow(){
-  const rows = tbody.querySelectorAll('tr');
-  if(rows.length === 0) return;
-  rows[rows.length - 1].remove();
+  const visibleRows = [...tbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none');
+  if(visibleRows.length === 0) return;
+  visibleRows[visibleRows.length - 1].remove();
   reindex();
   recalcSummary();
 }
@@ -660,6 +838,7 @@ function recalcRow(el){
 function recalcSummary(){
   let total=0, down=0;
   tbody.querySelectorAll('tr').forEach(tr=>{
+    if(tr.style.display === 'none') return;
     total += parseInt(tr.querySelector('.f-total').value) || 0;
     down += parseInt(tr.querySelector('.f-down').value) || 0;
   });
@@ -703,66 +882,67 @@ const SITE_DATA = [
   {site:'هياة الحقول / قسم البحوث والسيطرة النوعية', total:11, phone:''},
   {site:'هياة الحقول / متنزه عرفة', total:5, phone:''},
   {site:'منظومة كاميرات الرقمية', total:11, phone:''},
-  {site:'غرفة سيطرة المركزية / القلعة / بناية القلعـــــــة', total:8, phone:'3194'},
-  {site:'غرفة سيطرة المركزية / القلعة / مستودع المواد المتفجرة', total:2, phone:'3194'},
-  {site:'غرفة سيطرة المركزية / القلعة / قسم الهندسة النفط/ورشة قياسات الحقلية', total:3, phone:'3194'},
-  {site:'غرفة سيطرة المركزية / القلعة / قسم حماية المنشات النفطية /BP', total:3, phone:'3194'},
-  {site:'غرفة سيطرة المركزية / القلعة / قسم الخدمات البلدية /شعبة صحيات عرفة', total:5, phone:'3194'},
-  {site:'قسم حماية المنشات النفطية المركزية / سيطرة بابا السكنية', total:5, phone:''},
-  {site:'قسم حماية المنشات النفطية المركزية / مراب كيوان', total:10, phone:''},
-  {site:'قسم حماية المنشات النفطية المركزية / شعبة تصميم ونصب وصيانة الكاميرات', total:8, phone:''},
-  {site:'هيأة ادارة وتنمية الموارد البشرية / دار حضانة بابا', total:23, phone:''},
-  {site:'قسم الخدمات الادارية / دار استراحة الكريمية', total:41, phone:''},
-  {site:'قسم مقر الخدمات الادارية', total:7, phone:''},
-  {site:'مدرسة النار الازلية', total:11, phone:''},
-  {site:'روضة الصمود', total:10, phone:''},
-  {site:'قسم الخدمات الادارية الجمعية التعاونية وشعبة التغذية', total:10, phone:''},
-  {site:'قسم الخدمات الادارية / مركز الثقافي بابا (نادي بابا)', total:28, phone:'3663'},
-  {site:'هيأة العمليات / محطة تحميل ك/1', total:26, phone:'3150'},
-  {site:'هيأة العمليات / محطة حقل خزانات ك/1', total:4, phone:''},
-  {site:'هيأة العمليات / مجمع المعالجة المركزية/التركيز القديم', total:9, phone:'3499'},
-  {site:'هيأة الخدمات و المواد / مقرقسم هندسة ارتباط المواد و السيطرة المخزنية', total:11, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم النقليات/شعبة المعدات الثقيلة', total:14, phone:''},
-  {site:'هيأة الخدمات و المواد / مقرقسم الخدمات البلدية', total:6, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم النقليات/ مقر شعبة السيارات الخفيفة', total:11, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم النقليات/شعبة حركة الباصات', total:16, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم المخازن/محطة تعبئة وقود بابا الصناعية', total:13, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم الخدمات البلدية/شعبة محرقة بابا', total:5, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم الخدمات البلدية/شعبة مشتل بابا', total:7, phone:''},
-  {site:'هيأة الخدمات و المواد / قسم المخازن', total:14, phone:''},
-  {site:'الهياة الطبية / مستشفى كيوان', total:44, phone:'3861'},
-  {site:'الهياة الطبية / مستوصف بابا', total:5, phone:''},
-  {site:'الهياة الطبية / مستوصف كيوان', total:4, phone:''},
-  {site:'هيأة الصحة و السلامة / مقر الهيأة', total:15, phone:''},
-  {site:'هيأة الصحة و السلامة / قسم السلامة الصناعية و الاطفاء', total:9, phone:''},
-  {site:'هيئة المشاريع / المخازن الاستثمارية/1 و4', total:19, phone:'3759'},
-  {site:'هيئة المشاريع / ملحق المخازن الاستثمارية رقم/1', total:8, phone:''},
-  {site:'هيئة المشاريع / المخازن الاستثمارية/2', total:11, phone:''},
-  {site:'هيئة المشاريع / المخازن الاستثمارية/3', total:14, phone:''},
-  {site:'الهيأة الهندسية / مقر الهيأة', total:9, phone:''},
-  {site:'الهيأة الهندسية / قسم هندسة الاتصالات/شعبة معامل الاتصالات', total:3, phone:''},
-  {site:'الهيأة الهندسية / قسم هندسة الميكانيكية / ساحة ضخ الماء الصناعي', total:10, phone:''},
-  {site:'الهيأة الهندسية / قسم هندسة الميكانيك / مرأب خدمات الحقول', total:5, phone:''},
-  {site:'الهيأة الهندسية / قسم هندسة الميكانيك /شعبة المعامل الميكانيكية', total:1, phone:''},
-  {site:'منظومة مدخل دوائر عرفة', total:8, phone:''},
-  {site:'منظومة مدخل هياة المشاريع', total:5, phone:''},
-  {site:'منظومة مدخل مديرية شرطة الطاقة', total:11, phone:''},
-  {site:'سجن الموقوفين (شوراو)', total:11, phone:''},
-  {site:'سيطرة شوراو', total:14, phone:''},
-  {site:'كرفان الرئاسة', total:3, phone:''},
-  {site:'مقر اليات الشرطة', total:4, phone:''},
-  {site:'نادي كولف (نقطة 25) مدخل مديرية الشرطة سابقا', total:5, phone:''},
-  {site:'منظومة محطة الوقود', total:6, phone:''},
-  {site:'تحميل ك/1 (نقطة 10)', total:5, phone:''},
-  {site:'سيطرة ك/1 ( المدخل)', total:15, phone:''},
-  {site:'سيطرة ك/1 ( المدخل)', total:2, phone:''},
-  {site:'شعبة الميرة', total:11, phone:''},
-  {site:'ساحة الصهاريج / شوراو', total:5, phone:''},
+  {site:'غرفة سيطرة المركزية / القلعة / بناية القلعـــــــة', total:8, phone:'3194', room:'qalaa'},
+  {site:'غرفة سيطرة المركزية / القلعة / مستودع المواد المتفجرة', total:2, phone:'3194', room:'qalaa'},
+  {site:'غرفة سيطرة المركزية / القلعة / قسم الهندسة النفط/ورشة قياسات الحقلية', total:3, phone:'3194', room:'qalaa'},
+  {site:'غرفة سيطرة المركزية / القلعة / قسم حماية المنشات النفطية /BP', total:3, phone:'3194', room:'qalaa'},
+  {site:'غرفة سيطرة المركزية / القلعة / قسم الخدمات البلدية /شعبة صحيات عرفة', total:5, phone:'3194', room:'qalaa'},
+  {site:'قسم حماية المنشات النفطية المركزية / سيطرة بابا السكنية', total:5, phone:'', room:'qalaa'},
+  {site:'قسم حماية المنشات النفطية المركزية / مراب كيوان', total:10, phone:'', room:'qalaa'},
+  {site:'قسم حماية المنشات النفطية المركزية / شعبة تصميم ونصب وصيانة الكاميرات', total:8, phone:'', room:'qalaa'},
+  {site:'هيأة ادارة وتنمية الموارد البشرية / دار حضانة بابا', total:23, phone:'', room:'qalaa'},
+  {site:'قسم الخدمات الادارية / دار استراحة الكريمية', total:41, phone:'', room:'qalaa'},
+  {site:'قسم مقر الخدمات الادارية', total:7, phone:'', room:'qalaa'},
+  {site:'مدرسة النار الازلية', total:11, phone:'', room:'qalaa'},
+  {site:'روضة الصمود', total:10, phone:'', room:'qalaa'},
+  {site:'قسم الخدمات الادارية الجمعية التعاونية وشعبة التغذية', total:10, phone:'', room:'qalaa'},
+  {site:'قسم الخدمات الادارية / مركز الثقافي بابا (نادي بابا)', total:28, phone:'3663', room:'qalaa'},
+  {site:'هيأة العمليات / محطة تحميل ك/1', total:26, phone:'3150', room:'qalaa'},
+  {site:'هيأة العمليات / محطة حقل خزانات ك/1', total:4, phone:'', room:'qalaa'},
+  {site:'هيأة العمليات / مجمع المعالجة المركزية/التركيز القديم', total:9, phone:'3499', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / مقرقسم هندسة ارتباط المواد و السيطرة المخزنية', total:11, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم النقليات/شعبة المعدات الثقيلة', total:14, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / مقرقسم الخدمات البلدية', total:6, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم النقليات/ مقر شعبة السيارات الخفيفة', total:11, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم النقليات/شعبة حركة الباصات', total:16, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم المخازن/محطة تعبئة وقود بابا الصناعية', total:13, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم الخدمات البلدية/شعبة محرقة بابا', total:5, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم الخدمات البلدية/شعبة مشتل بابا', total:7, phone:'', room:'qalaa'},
+  {site:'هيأة الخدمات و المواد / قسم المخازن', total:14, phone:'', room:'qalaa'},
+  {site:'الهياة الطبية / مستشفى كيوان', total:44, phone:'3861', room:'qalaa'},
+  {site:'الهياة الطبية / مستوصف بابا', total:5, phone:'', room:'qalaa'},
+  {site:'الهياة الطبية / مستوصف كيوان', total:4, phone:'', room:'qalaa'},
+  {site:'هيأة الصحة و السلامة / مقر الهيأة', total:15, phone:'', room:'qalaa'},
+  {site:'هيأة الصحة و السلامة / قسم السلامة الصناعية و الاطفاء', total:9, phone:'', room:'qalaa'},
+  {site:'هيئة المشاريع / المخازن الاستثمارية/1 و4', total:19, phone:'3759', room:'qalaa'},
+  {site:'هيئة المشاريع / ملحق المخازن الاستثمارية رقم/1', total:8, phone:'', room:'qalaa'},
+  {site:'هيئة المشاريع / المخازن الاستثمارية/2', total:11, phone:'', room:'qalaa'},
+  {site:'هيئة المشاريع / المخازن الاستثمارية/3', total:14, phone:'', room:'qalaa'},
+  {site:'الهيأة الهندسية / مقر الهيأة', total:9, phone:'', room:'qalaa'},
+  {site:'الهيأة الهندسية / قسم هندسة الاتصالات/شعبة معامل الاتصالات', total:3, phone:'', room:'qalaa'},
+  {site:'الهيأة الهندسية / قسم هندسة الميكانيكية / ساحة ضخ الماء الصناعي', total:10, phone:'', room:'qalaa'},
+  {site:'الهيأة الهندسية / قسم هندسة الميكانيك / مرأب خدمات الحقول', total:5, phone:'', room:'qalaa'},
+  {site:'الهيأة الهندسية / قسم هندسة الميكانيك /شعبة المعامل الميكانيكية', total:1, phone:'', room:'qalaa'},
+  {site:'منظومة مدخل دوائر عرفة', total:8, phone:'', room:'taqa'},
+  {site:'منظومة مدخل هياة المشاريع', total:5, phone:'', room:'taqa'},
+  {site:'منظومة مدخل مديرية شرطة الطاقة', total:11, phone:'', room:'taqa'},
+  {site:'سجن الموقوفين (شوراو)', total:11, phone:'', room:'taqa'},
+  {site:'سيطرة شوراو', total:14, phone:'', room:'taqa'},
+  {site:'كرفان الرئاسة', total:3, phone:'', room:'taqa'},
+  {site:'مقر اليات الشرطة', total:4, phone:'', room:'taqa'},
+  {site:'نادي كولف (نقطة 25) مدخل مديرية الشرطة سابقا', total:5, phone:'', room:'taqa'},
+  {site:'منظومة محطة الوقود', total:6, phone:'', room:'taqa'},
+  {site:'تحميل ك/1 (نقطة 10)', total:5, phone:'', room:'taqa'},
+  {site:'سيطرة ك/1 ( المدخل)', total:15, phone:'', room:'taqa'},
+  {site:'سيطرة ك/1 ( المدخل)', total:2, phone:'', room:'taqa'},
+  {site:'شعبة الميرة', total:11, phone:'', room:'taqa'},
+  {site:'ساحة الصهاريج / شوراو', total:5, phone:'', room:'taqa'},
 ];
-SITE_DATA.forEach(d => makeRow({site:d.site, total:d.total, phone:d.phone, calltime:'', down:0, staff:'', inc:'', notes:''}));
+SITE_DATA.forEach(d => makeRow({site:d.site, total:d.total, phone:d.phone, calltime:'', down:0, staff:'', inc:'', notes:'', room:d.room}));
 document.getElementById('dateFromPicker').value = '2026-07-16';
 document.getElementById('dateToPicker').value = '2026-07-10';
 updateDayName();
+applyRoomFilter('arafa');
 
 // إعادة قياس نهائية بعد اكتمال تحميل الخطوط، لضمان دقة ارتفاع الخلايا وعرض الأعمدة
 if(document.fonts && document.fonts.ready){
