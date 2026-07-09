@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الموقف اليومي الفني لكاميرات المراقبة</title>
+<title>الموقف اليومي لكاميرات المراقبة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Cairo:wght@400;600;700;800&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -298,6 +298,7 @@
   .org-banner input:focus{outline:1px dashed #fff;}
   table.entries td input, table.entries td textarea{
     width:100%;
+    box-sizing:border-box;
     border:none;
     background:transparent;
     -webkit-appearance:none;
@@ -308,6 +309,7 @@
     resize:vertical;
     padding:2px;
   }
+  table.entries td input.f-auto{width:auto;min-width:100%;}
   table.entries td.notes-cell textarea, table.entries td.incidents-cell textarea{
     text-align:right;
     min-height:36px;
@@ -324,12 +326,18 @@
     background:#fff;
     border-radius:4px;
   }
+  .f-phone{
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:.5px;
+    direction:ltr;
+  }
   .col-site{min-width:220px;}
-  .col-total{width:66px;}
-  .col-phone{width:100px;}
-  .col-time{width:66px;}
-  .col-down{width:78px;}
-  .col-staff{min-width:120px;}
+  .col-total{min-width:60px;}
+  .col-phone{min-width:130px;}
+  .col-time{min-width:66px;}
+  .col-down{min-width:70px;}
+  .col-staff{min-width:110px;}
   .col-inc, .col-notes{min-width:180px;}
   .row-num{width:32px;font-weight:700;font-size:12px;}
   .del-cell{width:32px;}
@@ -530,18 +538,26 @@ function makeRow(data){
   tr.innerHTML = `
     <td class="row-num rowIndex"></td>
     <td class="site-cell"><textarea class="f-site" placeholder="اسم الموقع">${data.site||''}</textarea></td>
-    <td><input class="f-total" type="number" min="0" value="${data.total??''}" oninput="recalcRow(this)"></td>
-    <td><input class="f-phone" type="tel" inputmode="numeric" value="${data.phone||''}" placeholder="رقم الهاتف"></td>
+    <td><input class="f-total f-auto" type="number" min="0" value="${data.total??''}" oninput="recalcRow(this);autosizeField(this)"></td>
+    <td><input class="f-phone f-auto" type="tel" inputmode="numeric" value="${data.phone||''}" placeholder="رقم الهاتف" oninput="autosizeField(this)"></td>
     <td><input class="f-calltime" type="time" value="${data.calltime||''}"></td>
-    <td><input class="f-down" type="number" min="0" value="${data.down??''}" oninput="recalcRow(this)"></td>
-    <td><input class="f-staff" value="${data.staff||''}" placeholder="الاسم"></td>
+    <td><input class="f-down f-auto" type="number" min="0" value="${data.down??''}" oninput="recalcRow(this);autosizeField(this)"></td>
+    <td><input class="f-staff f-auto" value="${data.staff||''}" placeholder="الاسم" oninput="autosizeField(this)"></td>
     <td class="incidents-cell"><textarea class="f-inc" placeholder="لا يوجد حوادث يستحق الذكر">${data.inc||''}</textarea></td>
     <td class="notes-cell"><textarea class="f-notes" placeholder="جميع الكاميرات تعمل بصورة جيدة">${data.notes||''}</textarea></td>
     <td class="del-cell"><button onclick="delRow(this)" title="حذف">✕</button></td>
   `;
   tbody.appendChild(tr);
+  tr.querySelectorAll('.f-auto').forEach(autosizeField);
   reindex();
   recalcSummary();
+}
+
+function autosizeField(el){
+  const text = el.value || el.placeholder || '';
+  // account for Arabic/number characters width plus small buffer
+  const chars = Math.max(text.length + 1, 4);
+  el.style.width = chars + 'ch';
 }
 
 function reindex(){
