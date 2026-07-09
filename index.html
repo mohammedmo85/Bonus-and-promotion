@@ -53,7 +53,18 @@
     color:#3a3a3a;
     margin:0;
   }
-  .toolbar-btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .toolbar-btns{
+    display:flex;
+    gap:8px;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    max-width:100%;
+  }
+  .toolbar-btns::-webkit-scrollbar{height:4px;}
+  .toolbar-btns::-webkit-scrollbar-thumb{background:var(--accent-soft);border-radius:4px;}
+  .toolbar-btns .btn{flex:0 0 auto;white-space:nowrap;}
   .btn{
     font-family:'Cairo',sans-serif;
     border:none;
@@ -93,36 +104,12 @@
   .room-btn:hover{background:var(--accent-soft);}
   .room-btn.active{background:var(--accent);color:#fff;}
 
-  .toolbar-btns{position:relative;}
-  .delete-menu{
-    display:none;
-    position:absolute;
-    top:calc(100% + 6px);
-    left:0;
-    background:#fff;
-    border:1px solid #e2dcd6;
-    border-radius:8px;
-    box-shadow:0 8px 24px rgba(60,30,20,.15);
-    overflow:hidden;
-    z-index:20;
-    min-width:160px;
+  @media (max-width:640px){
+    .toolbar-btns .btn{
+      padding:8px 10px;
+      font-size:11.5px;
+    }
   }
-  .delete-menu.open{display:block;}
-  .delete-menu button{
-    display:block;
-    width:100%;
-    padding:10px 14px;
-    border:none;
-    background:#fff;
-    color:var(--ink);
-    font-family:inherit;
-    font-size:13px;
-    font-weight:600;
-    text-align:right;
-    cursor:pointer;
-  }
-  .delete-menu button:hover{background:var(--accent-soft);color:var(--accent);}
-  .delete-menu button + button{border-top:1px solid #eee2dc;}
 
   .sheet{
     max-width:1100px;
@@ -506,19 +493,15 @@
 
 <div class="toolbar">
   <div class="room-toggle" id="roomToggle">
-    <button type="button" class="room-btn active" data-room="arafa" onclick="applyRoomFilter('arafa')">الغرفة المركزية عرفة</button>
+    <button type="button" class="room-btn active" data-room="all" onclick="applyRoomFilter('all')">جميع الكاميرات</button>
+    <button type="button" class="room-btn" data-room="arafa" onclick="applyRoomFilter('arafa')">الغرفة المركزية عرفة</button>
     <button type="button" class="room-btn" data-room="qalaa" onclick="applyRoomFilter('qalaa')">الغرفة المركزية القلعة</button>
     <button type="button" class="room-btn" data-room="taqa" onclick="applyRoomFilter('taqa')">المنظومات التابعة للواء شرطة الطاقة الأول</button>
-    <button type="button" class="room-btn" data-room="all" onclick="applyRoomFilter('all')">جميع الكاميرات</button>
   </div>
   <div class="toolbar-btns">
     <button class="btn btn-ghost" onclick="openHelp()">كيفية عمل التطبيق ⓘ</button>
     <button class="btn btn-ghost" onclick="addRow()">إضافة موقع ＋</button>
-    <button class="btn btn-ghost" onclick="toggleDeleteMenu(event)">حذف مواقع 🗑</button>
-    <div id="deleteMenu" class="delete-menu">
-      <button type="button" onclick="delLastRow(); closeDeleteMenu();">حذف آخر موقع</button>
-      <button type="button" onclick="deleteAllRows(); closeDeleteMenu();">حذف جميع المواقع</button>
-    </div>
+    <button class="btn btn-ghost" onclick="resetToDefault()">ضبط الافتراضي ↺</button>
     <button class="btn btn-primary" onclick="exportPDF()">تصدير PDF ⬇</button>
   </div>
 </div>
@@ -541,8 +524,7 @@
     <h3>2. إضافة وحذف المواقع</h3>
     <ul>
       <li><b>إضافة موقع ＋</b> — يضيف صفًا جديدًا فارغًا في الغرفة المعروضة حاليًا لتعبئته يدويًا.</li>
-      <li><b>حذف مواقع 🗑</b> — قائمة منسدلة بها خيار حذف آخر موقع، أو حذف جميع المواقع الظاهرة حاليًا (خاصة بالغرفة المفعّلة فقط).</li>
-      <li>يمكن أيضًا حذف أي صف بمفرده بالضغط على ✕ في نهاية سطره.</li>
+      <li>يمكن حذف أي صف بمفرده بالضغط على ✕ في نهاية سطره.</li>
     </ul>
 
     <h3>3. تعبئة بيانات كل موقع</h3>
@@ -556,6 +538,10 @@
 
     <h3>6. التاريخ واليوم</h3>
     <p>يمكن تحديد "من تاريخ" و"إلى تاريخ" أعلى الجدول، ويُحدَّث اسم اليوم (الخميس، الجمعة...) تلقائيًا حسب التاريخ المُدخل.</p>
+
+    <p style="margin-top:20px;padding-top:12px;border-top:1px solid var(--accent-soft);text-align:center;color:var(--accent);font-family:'DiwaniEdited','Aref Ruqaa',serif;font-weight:400;font-size:1.3em;">
+      إعداد وتصميم محمد محي الدين عمر الجباري
+    </p>
   </div>
 </div>
 
@@ -612,7 +598,6 @@
     <div class="sline">المجموع الكلي للكاميرات / <span class="sval" id="sumTotal">0</span></div>
     <div class="sline">الكاميرات التي تعمل / <span class="sval ok" id="sumUp">0</span></div>
     <div class="sline">الكاميرات التي لا تعمل / <span class="sval bad" id="sumDown">0</span></div>
-    <div class="sline" style="font-family:'DiwaniEdited','Aref Ruqaa',serif;font-weight:400;font-size:1.3em;margin-top:14px;">من اعداد وتصميم محمد محي الدين عمر الجباري</div>
   </div>
 
 </div>
@@ -780,6 +765,73 @@ document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') closeHelp();
 });
 
+// ====== حفظ محلي خاص بكل شخص/جهاز على حدة (لا يظهر عند غيره) ======
+// يتم الحفظ داخل متصفح/جهاز المستخدم نفسه فقط (localStorage)، لذلك أي تعديل
+// يقوم به شخص يبقى محفوظًا عنده هو فقط، بينما بقية الأشخاص الذين يفتحون نفس
+// الملف الأصلي على أجهزتهم يستمرون برؤية البيانات الأصلية دون أي تغيير.
+const LOCAL_KEY = 'petro_camera_daily_report_v1';
+let saveTimer = null;
+
+function collectState(){
+  const rows = [...tbody.querySelectorAll('tr')].map(tr => ({
+    site: tr.querySelector('.f-site').value,
+    total: tr.querySelector('.f-total').value,
+    phone: tr.querySelector('.f-phone').value,
+    calltime: tr.querySelector('.f-calltime').value,
+    down: tr.querySelector('.f-down').value,
+    staff: tr.querySelector('.f-staff').value,
+    inc: tr.querySelector('.f-inc').value,
+    notes: tr.querySelector('.f-notes').value,
+    room: tr.dataset.room
+  }));
+  return {
+    orgTitle: document.getElementById('orgTitle').value,
+    dateFrom: document.getElementById('dateFrom').value,
+    dateTo: document.getElementById('dateTo').value,
+    room: currentRoom,
+    rows
+  };
+}
+
+function saveLocalState(){
+  try{
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(collectState()));
+  }catch(err){
+    console.error('تعذّر الحفظ المحلي:', err);
+  }
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveLocalState, 400);
+}
+
+function loadLocalState(){
+  try{
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.rows) || parsed.rows.length === 0) return null;
+    return parsed;
+  }catch(err){
+    console.error('تعذّرت قراءة الحفظ المحلي:', err);
+    return null;
+  }
+}
+
+// إعادة ضبط التطبيق على هذا الجهاز فقط: حذف كل التعديلات المحفوظة محليًا
+// والعودة إلى نقطة البداية (بيانات SITE_DATA الأصلية)
+function resetToDefault(){
+  const sure = confirm('هل أنت متأكد من إرجاع جميع البيانات إلى نقطة البداية؟\nسيتم حذف كل التعديلات المحفوظة على هذا الجهاز ولا يمكن التراجع عن ذلك.');
+  if(!sure) return;
+  try{
+    localStorage.removeItem(LOCAL_KEY);
+  }catch(err){
+    console.error('تعذّر حذف الحفظ المحلي:', err);
+  }
+  location.reload();
+}
+
 function applyRoomFilter(room){
   currentRoom = room;
   tbody.querySelectorAll('tr').forEach(tr=>{
@@ -790,49 +842,21 @@ function applyRoomFilter(room){
   });
   reindex();
   recalcSummary();
+  scheduleSave();
 }
 
-function addRow(){ makeRow(); }
-
-function toggleDeleteMenu(e){
-  e.stopPropagation();
-  document.getElementById('deleteMenu').classList.toggle('open');
-}
-function closeDeleteMenu(){
-  document.getElementById('deleteMenu').classList.remove('open');
-}
-document.addEventListener('click', function(e){
-  const menu = document.getElementById('deleteMenu');
-  if(menu && menu.classList.contains('open') && !menu.contains(e.target) && e.target.getAttribute('onclick') !== 'toggleDeleteMenu(event)'){
-    closeDeleteMenu();
-  }
-});
-
-function deleteAllRows(){
-  const visibleRows = [...tbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none');
-  if(visibleRows.length === 0) return;
-  if(!confirm('هل أنت متأكد من حذف جميع مواقع الغرفة المعروضة حاليًا؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-  visibleRows.forEach(tr => tr.remove());
-  reindex();
-  recalcSummary();
-}
-
-function delLastRow(){
-  const visibleRows = [...tbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none');
-  if(visibleRows.length === 0) return;
-  visibleRows[visibleRows.length - 1].remove();
-  reindex();
-  recalcSummary();
-}
+function addRow(){ makeRow(); scheduleSave(); }
 
 function delRow(btn){
   btn.closest('tr').remove();
   reindex();
   recalcSummary();
+  saveLocalState();
 }
 
 function recalcRow(el){
   recalcSummary();
+  scheduleSave();
 }
 
 function recalcSummary(){
@@ -938,11 +962,47 @@ const SITE_DATA = [
   {site:'شعبة الميرة', total:11, phone:'', room:'taqa'},
   {site:'ساحة الصهاريج / شوراو', total:5, phone:'', room:'taqa'},
 ];
-SITE_DATA.forEach(d => makeRow({site:d.site, total:d.total, phone:d.phone, calltime:'', down:0, staff:'', inc:'', notes:'', room:d.room}));
-document.getElementById('dateFromPicker').value = '2026-07-16';
-document.getElementById('dateToPicker').value = '2026-07-10';
-updateDayName();
-applyRoomFilter('arafa');
+
+const saved = loadLocalState();
+if(saved){
+  // هذا الجهاز يملك تعديلات محفوظة مسبقًا لديه فقط -> نعرضها بدلاً من الأصلية
+  saved.rows.forEach(d => makeRow(d));
+  if(saved.orgTitle) document.getElementById('orgTitle').value = saved.orgTitle;
+  if(saved.dateFrom){
+    document.getElementById('dateFrom').value = saved.dateFrom;
+    const [d,m,y] = saved.dateFrom.split('/');
+    if(d && m && y) document.getElementById('dateFromPicker').value = `${y}-${m}-${d}`;
+  }else{
+    document.getElementById('dateFromPicker').value = '2026-07-16';
+  }
+  if(saved.dateTo){
+    document.getElementById('dateTo').value = saved.dateTo;
+    const [d,m,y] = saved.dateTo.split('/');
+    if(d && m && y) document.getElementById('dateToPicker').value = `${y}-${m}-${d}`;
+  }else{
+    document.getElementById('dateToPicker').value = '2026-07-10';
+  }
+  updateDayName();
+  applyRoomFilter(saved.room || 'all');
+}else{
+  // لا توجد تعديلات محفوظة على هذا الجهاز -> نعرض البيانات الأصلية كما هي
+  SITE_DATA.forEach(d => makeRow({site:d.site, total:d.total, phone:d.phone, calltime:'', down:0, staff:'', inc:'', notes:'', room:d.room}));
+  document.getElementById('dateFromPicker').value = '2026-07-16';
+  document.getElementById('dateToPicker').value = '2026-07-10';
+  updateDayName();
+  applyRoomFilter('all');
+}
+
+// حفظ تلقائي لأي تعديل يقوم به المستخدم على هذا الجهاز فقط (اسم موقع، هاتف، ملاحظات...الخ)
+tbody.addEventListener('input', scheduleSave);
+tbody.addEventListener('change', scheduleSave);
+['orgTitle','dateFrom','dateTo'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('input', scheduleSave);
+    el.addEventListener('change', scheduleSave);
+  }
+});
 
 // إعادة قياس نهائية بعد اكتمال تحميل الخطوط، لضمان دقة ارتفاع الخلايا وعرض الأعمدة
 if(document.fonts && document.fonts.ready){
@@ -984,12 +1044,51 @@ async function exportPDF(){
   clone.style.border='none';
   clone.style.width='max-content';
   clone.style.maxWidth='none';
+  clone.style.position='relative';
 
   const pdfArea = document.getElementById('pdfArea');
   pdfArea.innerHTML = '';
   pdfArea.appendChild(clone);
 
   await new Promise(r=>setTimeout(r,50));
+
+  // ====== إضافة علامة مائية شفافة واحدة فقط باسم المصمم تغطي كامل خلفية الصفحة المصدّرة (تظهر فقط داخل PDF) ======
+  const wmText = 'محمد محي الدين عمر الجباري';
+  const wmW = clone.scrollWidth, wmH = clone.scrollHeight;
+  const wmDiagonal = Math.sqrt(wmW * wmW + wmH * wmH);
+
+  // نقيس عرض النص بحجم خط مرجعي، ثم نحسب حجم الخط اللازم كي يمتد النص بطول قطر الصفحة تقريبًا
+  const wmRefSize = 100;
+  const wmMeasureCanvas = document.createElement('canvas');
+  const wmCtx = wmMeasureCanvas.getContext('2d');
+  wmCtx.font = `700 ${wmRefSize}px 'Cairo', sans-serif`;
+  const wmRefWidth = wmCtx.measureText(wmText).width || 1;
+  const wmFontSize = (wmDiagonal * 0.85) / wmRefWidth * wmRefSize;
+
+  const wmLayer = document.createElement('div');
+  wmLayer.style.position = 'absolute';
+  wmLayer.style.top = '0';
+  wmLayer.style.right = '0';
+  wmLayer.style.width = wmW + 'px';
+  wmLayer.style.height = wmH + 'px';
+  wmLayer.style.overflow = 'hidden';
+  wmLayer.style.pointerEvents = 'none';
+  wmLayer.style.zIndex = '999';
+
+  const wmSpan = document.createElement('span');
+  wmSpan.textContent = wmText;
+  wmSpan.style.position = 'absolute';
+  wmSpan.style.top = '50%';
+  wmSpan.style.left = '50%';
+  wmSpan.style.transform = 'translate(-50%,-50%) rotate(-32deg)';
+  wmSpan.style.whiteSpace = 'nowrap';
+  wmSpan.style.color = '#a83232';
+  wmSpan.style.opacity = '0.08';
+  wmSpan.style.fontFamily = "'Cairo',sans-serif";
+  wmSpan.style.fontWeight = '700';
+  wmSpan.style.fontSize = wmFontSize + 'px';
+  wmLayer.appendChild(wmSpan);
+  clone.appendChild(wmLayer);
 
   const canvas = await html2canvas(clone, {scale:2, backgroundColor:'#ffffff'});
   const imgData = canvas.toDataURL('image/png');
